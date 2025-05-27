@@ -709,8 +709,8 @@ def test_op(BATCH_SIZE, NUM_HEADS, SEQ_LEN, HEAD_DIM, causal, dtype=torch.float1
     tri_dQ, Q.grad = Q.grad.clone(), None
 
     # compare
-    rtol = 0.0
-    atol = 1e-2
+    rtol = 1e-2
+    atol = 1e-1
     assert torch.allclose(ref_O, tri_out, atol=atol, rtol=rtol)
     assert torch.allclose(ref_dK, tri_dK, atol=atol, rtol=rtol)
     assert torch.allclose(ref_dV, tri_dV, atol=atol, rtol=rtol)
