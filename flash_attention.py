@@ -86,15 +86,13 @@ def _attn_fwd_inner(
             num_stages=num_stages,
             num_warps=num_warps,
         )
-        for BLOCK_SIZE_Q in [16, 32, 64]
-        for BLOCK_SIZE_KV in [16]  # ← FIXED: only 16, since HEAD_DIM = 16
-        for num_stages in [3]
-        for num_warps in [2]
+        for BLOCK_SIZE_Q in [64, 128]
+        for BLOCK_SIZE_KV in [32, 64]
+        for num_stages in ([3, 4, 7])
+        for num_warps in [2, 4]
     ],
     key=["SEQ_LEN", "HEAD_DIM"],
 )
-
-
 @triton.jit
 def _attn_fwd(
     Q,  # BATCH_SIZE, NUM_HEADS, SEQ_LEN, HEAD_DIM
@@ -709,8 +707,8 @@ def test_op(BATCH_SIZE, NUM_HEADS, SEQ_LEN, HEAD_DIM, causal, dtype=torch.float1
     tri_dQ, Q.grad = Q.grad.clone(), None
 
     # compare
-    rtol = 1e-1
-    atol = 1e-1
+    rtol = 0.0
+    atol = 1e-2
     assert torch.allclose(ref_O, tri_out, atol=atol, rtol=rtol)
     assert torch.allclose(ref_dK, tri_dK, atol=atol, rtol=rtol)
     assert torch.allclose(ref_dV, tri_dV, atol=atol, rtol=rtol)
@@ -718,7 +716,6 @@ def test_op(BATCH_SIZE, NUM_HEADS, SEQ_LEN, HEAD_DIM, causal, dtype=torch.float1
 
 
 if __name__ == "__main__":
-    test_op(BATCH_SIZE=1, NUM_HEADS=1, SEQ_LEN=64, HEAD_DIM=16, causal=True)
-    test_op(BATCH_SIZE=1, NUM_HEADS=1, SEQ_LEN=64, HEAD_DIM=16, causal=False)
+    test_op(BATCH_SIZE=8, NUM_HEADS=16, SEQ_LEN=64, HEAD_DIM=32, causal=True)
+    test_op(BATCH_SIZE=8, NUM_HEADS=16, SEQ_LEN=64, HEAD_DIM=32, causal=False)
     print("PASSED")
-
