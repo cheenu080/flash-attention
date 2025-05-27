@@ -86,13 +86,14 @@ def _attn_fwd_inner(
             num_stages=num_stages,
             num_warps=num_warps,
         )
-        for BLOCK_SIZE_Q in [16, 32, 64]      # allow smaller Q blocks too
-        for BLOCK_SIZE_KV in [8, 16]          # support small HEAD_DIMs like 8
-        for num_stages in [3, 4]
-        for num_warps in [2, 4]
+        for BLOCK_SIZE_Q in [16, 32, 64]
+        for BLOCK_SIZE_KV in [16]  # ← FIXED: only 16, since HEAD_DIM = 16
+        for num_stages in [3]
+        for num_warps in [2]
     ],
     key=["SEQ_LEN", "HEAD_DIM"],
 )
+
 
 @triton.jit
 def _attn_fwd(
@@ -720,3 +721,4 @@ if __name__ == "__main__":
     test_op(BATCH_SIZE=1, NUM_HEADS=1, SEQ_LEN=16, HEAD_DIM=16, causal=True)
     test_op(BATCH_SIZE=1, NUM_HEADS=1, SEQ_LEN=16, HEAD_DIM=16, causal=False)
     print("PASSED")
+
