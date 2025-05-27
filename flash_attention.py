@@ -86,13 +86,14 @@ def _attn_fwd_inner(
             num_stages=num_stages,
             num_warps=num_warps,
         )
-        for BLOCK_SIZE_Q in [64, 128]
-        for BLOCK_SIZE_KV in [32, 64]
-        for num_stages in ([3, 4, 7])
+        for BLOCK_SIZE_Q in [16, 32, 64]      # allow smaller Q blocks too
+        for BLOCK_SIZE_KV in [8, 16]          # support small HEAD_DIMs like 8
+        for num_stages in [3, 4]
         for num_warps in [2, 4]
     ],
     key=["SEQ_LEN", "HEAD_DIM"],
 )
+
 @triton.jit
 def _attn_fwd(
     Q,  # BATCH_SIZE, NUM_HEADS, SEQ_LEN, HEAD_DIM
@@ -716,6 +717,6 @@ def test_op(BATCH_SIZE, NUM_HEADS, SEQ_LEN, HEAD_DIM, causal, dtype=torch.float1
 
 
 if __name__ == "__main__":
-    test_op(BATCH_SIZE=1, NUM_HEADS=1, SEQ_LEN=8, HEAD_DIM=4, causal=True)
-    test_op(BATCH_SIZE=1, NUM_HEADS=1, SEQ_LEN=8, HEAD_DIM=4, causal=False)
+    test_op(BATCH_SIZE=1, NUM_HEADS=1, SEQ_LEN=8, HEAD_DIM=8, causal=True)
+    test_op(BATCH_SIZE=1, NUM_HEADS=1, SEQ_LEN=8, HEAD_DIM=8, causal=False)
     print("PASSED")
